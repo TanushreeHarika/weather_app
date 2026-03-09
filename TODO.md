@@ -10,10 +10,10 @@
 - [x] Created requirements.txt
 - [x] Fixed bcrypt compatibility issue (bcrypt==4.0.1)
 - [x] Day/night background transitions based on city timezone
+- [x] Removed unused mysql-connector-python from requirements.txt
 
 ## 📋 Environment Variables (.env)
 ```
-MYSQL_PASSWORD=root123
 WEATHER_API_KEY=your_openweathermap_api_key
 JWT_SECRET=dev-secret-change-this
 ```
