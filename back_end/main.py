@@ -197,8 +197,16 @@ def get_weather(city: str, db: Session = Depends(get_db), current_user: Optional
 
 @app.get("/forecast/{city}")
 def get_forecast(city: str, db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_current_user_from_token_optional)):
-    # Demo mode: return sample data if no API key is configured
-    if not WEATHER_API_KEY or WEATHER_API_KEY == "your_openweathermap_api_key":
+    # Demo mode: return sample data if no API key is configured or if key is invalid
+    # Check for common invalid/placeholder API key patterns
+    is_demo_mode = (
+        not WEATHER_API_KEY or 
+        WEATHER_API_KEY == "your_openweathermap_api_key" or 
+        WEATHER_API_KEY == "your_api_key_here" or
+        WEATHER_API_KEY.startswith("sk-")  # OpenAI keys are not OpenWeatherMap keys
+    )
+    
+    if is_demo_mode:
         # Return demo data with different times based on city name hash
         import hashlib
         
@@ -265,6 +273,18 @@ def get_forecast(city: str, db: Session = Depends(get_db), current_user: Optiona
                 "lon": 77.2090 + (city_hash % 50) / 10
             }
         }
+        
+        # Save to history in demo mode too
+        if current_user:
+            try:
+                temperature = demo_data["current"]["temp"]
+                description = demo_data["current"]["weather"][0]["description"]
+                search_record = SearchHistory(user_id=current_user.id, city=city, temperature=temperature, description=description)
+                db.add(search_record)
+                db.commit()
+            except Exception:
+                db.rollback()
+        
         return demo_data
     
     # Get current weather
